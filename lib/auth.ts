@@ -1,14 +1,14 @@
 import "server-only";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import jwt, { type Secret, type SignOptions } from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
-const JWT_EXPIRES_IN = "7d";
+const JWT_SECRET: Secret = process.env.JWT_SECRET || "your-secret-key-change-in-production";
+const JWT_EXPIRES_IN: SignOptions["expiresIn"] = "7d";
 const EMAIL_VERIFICATION_TOKEN_TTL_HOURS = Math.max(
   1,
   Number.parseInt(process.env.EMAIL_VERIFICATION_TOKEN_TTL_HOURS ?? "24", 10) || 24
 );
-const EMAIL_VERIFICATION_EXPIRES_IN = `${EMAIL_VERIFICATION_TOKEN_TTL_HOURS}h`;
+const EMAIL_VERIFICATION_EXPIRES_IN: SignOptions["expiresIn"] = `${EMAIL_VERIFICATION_TOKEN_TTL_HOURS}h`;
 
 export interface AuthUser {
   id: string;

@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function PaystackCallbackPage() {
+function PaystackCallbackContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [status, setStatus] = useState<"verifying" | "success" | "error">("verifying");
@@ -83,6 +83,23 @@ export default function PaystackCallbackPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function PaystackCallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen flex-col items-center justify-center bg-[#0f172a] text-center text-gray-100">
+          <div className="w-full max-w-md rounded-xl border border-gray-800 bg-[#0b1324] p-8 shadow-2xl">
+            <div className="mb-4 text-sm font-mono uppercase tracking-widest text-gray-500">Paystack Checkout</div>
+            <div className="text-2xl font-bold">Loading...</div>
+          </div>
+        </div>
+      }
+    >
+      <PaystackCallbackContent />
+    </Suspense>
   );
 }
 

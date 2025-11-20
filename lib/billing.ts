@@ -77,16 +77,14 @@ export type UsageSnapshot = {
   creditResetsAt: string | null;
 };
 
+type FreemiumLimitCode = "CONVERSATION_LIMIT" | "SUBMISSION_LIMIT" | "CREDIT_LIMIT";
+
 class FreemiumLimitError extends Error {
-  code: "CONVERSATION_LIMIT" | "SUBMISSION_LIMIT" | "CREDIT_LIMIT";
+  code: FreemiumLimitCode;
   status: number;
   details?: Record<string, unknown>;
 
-  constructor(
-    code: "CONVERSATION_LIMIT" | "SUBMISSION_LIMIT",
-    message: string,
-    details?: Record<string, unknown>
-  ) {
+  constructor(code: FreemiumLimitCode, message: string, details?: Record<string, unknown>) {
     super(message);
     this.code = code;
     this.status = 402;

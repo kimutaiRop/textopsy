@@ -49,8 +49,9 @@ function renderLayout({ headline, intro, body, footerNote, previewText }: Layout
 </html>`;
 }
 
-function renderText(lines: string[]) {
-  return lines.filter(Boolean).join("\n\n");
+function renderText(lines: Array<string | null | undefined>) {
+  const nonEmptyLines = lines.filter((line): line is string => Boolean(line && line.trim().length));
+  return nonEmptyLines.join("\n\n");
 }
 
 export type VerificationEmailProps = {

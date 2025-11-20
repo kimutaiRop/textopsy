@@ -6,12 +6,12 @@ import { calculateProExpiry } from "@/lib/billing";
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
     await requireAdmin(request);
 
-    const { userId } = params;
+    const { userId } = await params;
     const body = await request.json();
     const { plan, durationDays } = body;
 

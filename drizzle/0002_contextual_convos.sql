@@ -1,0 +1,2 @@
+ALTER TABLE "conversations" ADD COLUMN "context" jsonb;
+

@@ -321,7 +321,7 @@ export default function PlanPage() {
                       />
                       {creditsLimit !== null && (
                         <UsageMeter
-                          label="Monthly credits (Pro)"
+                          label={isPro ? "Monthly credits (Pro)" : "Monthly submissions"}
                           used={creditsUsed}
                           limit={creditsLimit}
                           accentClass="bg-[#f472b6]"
@@ -333,7 +333,8 @@ export default function PlanPage() {
 
                       {!isPro && resetDate && (
                         <div className="rounded-lg border border-gray-800 bg-[#0b1324] px-4 py-3 text-xs text-gray-400">
-                          Daily quota resets {resetDate}.
+                          <p>Daily quota resets {resetDate}.</p>
+                          {creditResetDate && <p>Monthly quota resets {creditResetDate}.</p>}
                         </div>
                       )}
 

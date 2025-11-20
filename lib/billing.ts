@@ -15,6 +15,7 @@ import { generateId } from "@/lib/conversation";
 
 const DEFAULT_MAX_CONVERSATIONS = 5;
 const DEFAULT_DAILY_SUBMISSIONS = 3;
+const DEFAULT_MONTHLY_SUBMISSIONS = 10;
 const DEFAULT_PRO_DURATION_DAYS = 30;
 const DEFAULT_PRO_CREDITS = 200;
 
@@ -34,6 +35,11 @@ export const FREE_MAX_CONVERSATIONS = toPositiveInteger(
 export const FREE_MAX_SUBMISSIONS_PER_DAY = toPositiveInteger(
   process.env.FREE_PLAN_MAX_SUBMISSIONS_PER_DAY,
   DEFAULT_DAILY_SUBMISSIONS
+);
+
+export const FREE_MAX_SUBMISSIONS_PER_MONTH = toPositiveInteger(
+  process.env.FREE_PLAN_MAX_SUBMISSIONS_PER_MONTH,
+  DEFAULT_MONTHLY_SUBMISSIONS
 );
 
 export const PRO_DURATION_IN_DAYS = toPositiveInteger(
@@ -238,6 +244,46 @@ async function incrementProCreditUsage(userId: string) {
     .where(eq(userMonthlyCredits.id, existing.id) as any);
 }
 
+async function incrementFreeMonthlySubmissionUsage(userId: string) {
+  const usageMonth = await getUsageMonthKey();
+
+  const [existing] = await db
+    .select()
+    .from(userMonthlyCredits as any)
+    .where(and(eq(userMonthlyCredits.userId, userId), eq(userMonthlyCredits.usageMonth, usageMonth)) as any)
+    .limit(1);
+
+  if (!existing) {
+    await db.insert(userMonthlyCredits as any).values({
+      id: generateId(),
+      userId,
+      usageMonth,
+      creditsUsed: 1,
+    });
+    return;
+  }
+
+  if (existing.creditsUsed >= FREE_MAX_SUBMISSIONS_PER_MONTH) {
+    throw new FreemiumLimitError(
+      "SUBMISSION_LIMIT",
+      "You reached this month's free limit (10 submissions). Upgrade to keep going.",
+      {
+        limit: FREE_MAX_SUBMISSIONS_PER_MONTH,
+        used: existing.creditsUsed,
+        resetsAt: await getNextMonthResetDateISO(),
+      }
+    );
+  }
+
+  await db
+    .update(userMonthlyCredits as any)
+    .set({
+      creditsUsed: existing.creditsUsed + 1,
+      updatedAt: new Date(),
+    })
+    .where(eq(userMonthlyCredits.id, existing.id) as any);
+}
+
 export async function incrementSubmissionUsage(userId: string, isPro: boolean) {
   if (isPro) {
     await incrementProCreditUsage(userId);
@@ -253,6 +299,8 @@ export async function incrementSubmissionUsage(userId: string, isPro: boolean) {
     .limit(1);
 
   if (!existing) {
+    // Check monthly limit first before incrementing daily
+    await incrementFreeMonthlySubmissionUsage(userId);
     await db.insert(userDailyUsage as any).values({
       id: generateId(),
       userId,
@@ -265,7 +313,7 @@ export async function incrementSubmissionUsage(userId: string, isPro: boolean) {
   if (existing.submissionCount >= FREE_MAX_SUBMISSIONS_PER_DAY) {
     throw new FreemiumLimitError(
       "SUBMISSION_LIMIT",
-      "You reached today’s free limit (3 submissions). Upgrade to keep going.",
+      "You reached today's free limit (3 submissions). Upgrade to keep going.",
       {
         limit: FREE_MAX_SUBMISSIONS_PER_DAY,
         used: existing.submissionCount,
@@ -273,6 +321,9 @@ export async function incrementSubmissionUsage(userId: string, isPro: boolean) {
       }
     );
   }
+
+  // Check monthly limit before incrementing daily
+  await incrementFreeMonthlySubmissionUsage(userId);
 
   await db
     .update(userDailyUsage as any)
@@ -318,15 +369,24 @@ export async function getUsageSnapshot(userId: string, isPro: boolean): Promise<
 
   const submissionsUsed = daily?.submissionCount ?? 0;
 
+  const usageMonth = await getUsageMonthKey();
+  const [monthly] = await db
+    .select()
+    .from(userMonthlyCredits as any)
+    .where(and(eq(userMonthlyCredits.userId, userId), eq(userMonthlyCredits.usageMonth, usageMonth)) as any)
+    .limit(1);
+
+  const monthlySubmissionsUsed = monthly?.creditsUsed ?? 0;
+
   return {
     conversationLimit: FREE_MAX_CONVERSATIONS,
     conversationsUsed: Number(total ?? 0),
     submissionsLimit: FREE_MAX_SUBMISSIONS_PER_DAY,
     submissionsUsed,
     resetsAt: await getNextResetDateISO(),
-    creditLimit: null,
-    creditsUsed: 0,
-    creditResetsAt: null,
+    creditLimit: FREE_MAX_SUBMISSIONS_PER_MONTH,
+    creditsUsed: monthlySubmissionsUsed,
+    creditResetsAt: await getNextMonthResetDateISO(),
   };
 }
 

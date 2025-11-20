@@ -50,7 +50,12 @@ export function FreemiumBanner({
             <p className="text-xs text-gray-500">Renews on {renewalDate}</p>
           )}
           {!limits?.isPro && (
-            <p className="text-xs text-gray-500">Free tier · 5 conversations · 3 submissions/day</p>
+            <p className="text-xs text-gray-500">Free tier · 5 conversations · 3 submissions/day · 10/month</p>
+          )}
+          {!limits?.isPro && creditLimit !== null && (
+            <p className="text-xs text-gray-500">
+              {creditsRemaining} of {creditLimit} monthly submissions left
+            </p>
           )}
           {limits?.isPro && creditLimit !== null && (
             <p className="text-xs text-gray-500">
@@ -104,9 +109,9 @@ export function FreemiumBanner({
         )}
         {!limits?.isPro && (
           <p className="text-[11px] uppercase tracking-widest text-gray-600">
-            Free plan includes 5 conversations & 3 submissions per day
-              </p>
-            )}
+            Free plan includes 5 conversations, 3 submissions per day & 10 per month
+          </p>
+        )}
           </div>
 
       {loading && (

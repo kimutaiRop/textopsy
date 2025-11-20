@@ -110,8 +110,8 @@ export function FreemiumBanner({
         {!limits?.isPro && (
           <p className="text-[11px] uppercase tracking-widest text-gray-600">
             Free plan includes 5 conversations, 3 submissions per day & 10 per month
-          </p>
-        )}
+              </p>
+            )}
           </div>
 
       {loading && (

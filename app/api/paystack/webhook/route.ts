@@ -56,9 +56,44 @@ export async function POST(request: Request) {
 async function handlePaymentSuccess(eventName: string, data: any) {
   const metadata = data?.metadata ?? {};
   const userId = metadata.userId;
+  const reference = data?.reference;
 
   if (!userId) {
-    console.warn("[paystack:webhook] Missing userId in metadata", data?.reference);
+    console.warn("[paystack:webhook] Missing userId in metadata", reference);
+    return;
+  }
+
+  if (!reference) {
+    console.warn("[paystack:webhook] Missing reference in payment data");
+    return;
+  }
+
+  // Security: Check if transaction was already processed (idempotency)
+  const [existingTransaction] = await db
+    .select({ status: paystackTransactions.status, userId: paystackTransactions.userId })
+    .from(paystackTransactions as any)
+    .where(eq(paystackTransactions.reference, reference) as any)
+    .limit(1);
+
+  if (existingTransaction) {
+    // Verify userId matches to prevent unauthorized access
+    if (existingTransaction.userId !== userId) {
+      console.error(
+        `[paystack:webhook] UserId mismatch for reference ${reference}. Expected: ${existingTransaction.userId}, Received: ${userId}`
+      );
+      return;
+    }
+
+    // If already processed, skip (idempotency)
+    if (existingTransaction.status === "success") {
+      console.log(`[paystack:webhook] Transaction ${reference} already processed, skipping.`);
+      return;
+    }
+  }
+
+  // Security: Verify payment status is actually success
+  if (data?.status !== "success") {
+    console.warn(`[paystack:webhook] Payment status is not success for reference ${reference}`, data?.status);
     return;
   }
 

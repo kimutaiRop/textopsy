@@ -41,12 +41,48 @@ export async function POST(request: Request) {
     );
   }
 
+  // Prevent re-processing already successful transactions (idempotency)
+  if (transaction.status === "success") {
+    const planInfo = await getUserPlanInfo(authUser.id);
+    return NextResponse.json({
+      success: true,
+      plan: planInfo?.plan ?? "free",
+      planExpiresAt: planInfo?.planExpiresAt ? planInfo.planExpiresAt.toISOString() : null,
+      message: "Transaction already processed.",
+    });
+  }
+
   try {
     const verification = await verifyPaystackTransaction(reference);
 
     if (verification.status !== "success") {
       return NextResponse.json(
         { error: "Payment not completed yet. Please finish the Paystack flow." },
+        { status: 400 }
+      );
+    }
+
+    // Security: Verify payment amount matches expected amount (prevent amount tampering)
+    const expectedAmount = transaction.amount;
+    if (verification.amount !== expectedAmount) {
+      console.error(
+        `[paystack:verify] Amount mismatch for reference ${reference}. Expected: ${expectedAmount}, Received: ${verification.amount}`
+      );
+      return NextResponse.json(
+        { error: "Payment amount mismatch. Please contact support." },
+        { status: 400 }
+      );
+    }
+
+    // Security: Verify currency matches expected currency
+    const expectedCurrency = transaction.currency?.toUpperCase() ?? "NGN";
+    const receivedCurrency = verification.currency?.toUpperCase() ?? "NGN";
+    if (receivedCurrency !== expectedCurrency) {
+      console.error(
+        `[paystack:verify] Currency mismatch for reference ${reference}. Expected: ${expectedCurrency}, Received: ${receivedCurrency}`
+      );
+      return NextResponse.json(
+        { error: "Payment currency mismatch. Please contact support." },
         { status: 400 }
       );
     }

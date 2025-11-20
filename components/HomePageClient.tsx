@@ -703,6 +703,15 @@ export default function HomePageClient() {
 
         <footer className="border-t border-gray-800 p-6 text-center text-xs text-gray-700">
           <p>Textopsy v1.2 &copy; {new Date().getFullYear()}</p>
+          <div className="mt-2 flex items-center justify-center gap-4">
+            <Link href="/terms" className="text-gray-600 hover:text-gray-400 transition-colors">
+              Terms and Conditions
+            </Link>
+            <span className="text-gray-600">|</span>
+            <Link href="/privacy" className="text-gray-600 hover:text-gray-400 transition-colors">
+              Privacy Policy
+            </Link>
+          </div>
         </footer>
       </div>
       <ClarificationModal

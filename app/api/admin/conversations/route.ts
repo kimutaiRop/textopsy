@@ -37,15 +37,17 @@ export async function GET(request: Request) {
 
     // Then get aggregated analysis data for each conversation
     const convsWithAnalytics = await Promise.all(
-      convs.map(async (conv) => {
-        const analysisData = await db
-          .select({
-            count: count(),
-            avgCringe: avg(analyses.cringeScore),
-            avgInterest: avg(analyses.interestLevel),
-          })
-          .from(analyses as any)
-          .where(eq(analyses.conversationId, conv.id) as any);
+      convs
+        .filter((conv) => conv.id != null)
+        .map(async (conv) => {
+          const analysisData = await db
+            .select({
+              count: count(),
+              avgCringe: avg(analyses.cringeScore),
+              avgInterest: avg(analyses.interestLevel),
+            })
+            .from(analyses as any)
+            .where(eq(analyses.conversationId, conv.id!) as any);
 
         const data = analysisData[0];
         return {

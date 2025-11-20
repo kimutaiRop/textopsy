@@ -25,7 +25,7 @@ export async function GET(request: Request) {
     if (planFilter === "pro") {
       conditions.push(eq(users.plan, "pro") as any);
     } else if (planFilter === "free") {
-      conditions.push(or(eq(users.plan, "free"), eq(users.plan, null)) as any);
+      conditions.push(eq(users.plan, "free") as any);
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;

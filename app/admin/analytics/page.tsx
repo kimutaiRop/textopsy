@@ -71,9 +71,9 @@ export default function AdminAnalyticsPage() {
     fetchAnalytics(days);
   }, [days]);
 
-  const formatCurrency = (amount: number, currency = "NGN") => {
-    if (currency === "NGN") {
-      return `₦${(amount / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const formatCurrency = (amount: number, currency = "KES") => {
+    if (currency === "KES") {
+      return `KSh ${(amount / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
     return new Intl.NumberFormat("en-US", {
       style: "currency",

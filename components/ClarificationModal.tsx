@@ -77,7 +77,7 @@ export function ClarificationModal({
     switch (question.area) {
       case "perspective":
         return (
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div className="mt-3 sm:mt-4 grid gap-2 sm:gap-3 sm:grid-cols-2">
             {perspectiveOptions.map((option) => {
               const isActive = value === option.value;
               return (
@@ -85,7 +85,7 @@ export function ClarificationModal({
                   key={option.value}
                   type="button"
                   onClick={() => updateAnswer(question.id, option.value)}
-                  className={`group flex flex-col items-start rounded border-2 px-4 py-3.5 text-left transition-all ${
+                  className={`group flex flex-col items-start rounded border-2 px-3 sm:px-4 py-2.5 sm:py-3.5 text-left transition-all ${
                     isActive
                       ? "border-[#b74bff] bg-[#b74bff]/10 text-white"
                       : "border-gray-800 bg-[#1e293b] text-gray-300 hover:border-gray-700 hover:bg-gray-800"
@@ -102,7 +102,7 @@ export function ClarificationModal({
         );
       case "relationshipType":
         return (
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div className="mt-3 sm:mt-4 grid gap-2 sm:gap-3 sm:grid-cols-2">
             {relationshipOptions.map((option) => {
               const isActive = value === option.value;
               return (
@@ -110,7 +110,7 @@ export function ClarificationModal({
                   key={option.value}
                   type="button"
                   onClick={() => updateAnswer(question.id, option.value)}
-                  className={`rounded border-2 px-4 py-3 text-sm font-semibold transition-all ${
+                  className={`rounded border-2 px-3 sm:px-4 py-2.5 sm:py-3 text-sm font-semibold transition-all ${
                     isActive
                       ? "border-[#b74bff] bg-[#b74bff]/10 text-white"
                       : "border-gray-800 bg-[#1e293b] text-gray-300 hover:border-gray-700 hover:bg-gray-800"
@@ -125,7 +125,7 @@ export function ClarificationModal({
       case "userGender":
       case "partnerGender":
         return (
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+          <div className="mt-3 sm:mt-4 grid gap-2 sm:gap-3 sm:grid-cols-2 md:grid-cols-3">
             {genderOptions.map((option) => {
               const isActive = value === option.value;
               return (
@@ -133,7 +133,7 @@ export function ClarificationModal({
                   key={option.value}
                   type="button"
                   onClick={() => updateAnswer(question.id, option.value)}
-                  className={`rounded border-2 px-4 py-3 text-sm font-semibold transition-all ${
+                  className={`rounded border-2 px-3 sm:px-4 py-2.5 sm:py-3 text-sm font-semibold transition-all ${
                     isActive
                       ? "border-[#b74bff] bg-[#b74bff]/10 text-white"
                       : "border-gray-800 bg-[#1e293b] text-gray-300 hover:border-gray-700 hover:bg-gray-800"
@@ -150,7 +150,7 @@ export function ClarificationModal({
         return (
           <input
             type="text"
-            className="mt-4 w-full rounded border-2 border-gray-800 bg-[#1e293b] px-4 py-3 text-sm text-gray-200 placeholder:text-gray-500 focus:border-[#b74bff] focus:bg-gray-800 focus:outline-none transition-all"
+            className="mt-3 sm:mt-4 w-full rounded border-2 border-gray-800 bg-[#1e293b] px-3 sm:px-4 py-2.5 sm:py-3 text-sm text-gray-200 placeholder:text-gray-500 focus:border-[#b74bff] focus:bg-gray-800 focus:outline-none transition-all"
             value={value}
             placeholder="Type your answer"
             onChange={(event) => updateAnswer(question.id, event.target.value)}
@@ -159,7 +159,7 @@ export function ClarificationModal({
       default:
         return (
           <textarea
-            className="mt-4 w-full rounded border-2 border-gray-800 bg-[#1e293b] px-4 py-3 text-sm text-gray-200 placeholder:text-gray-500 focus:border-[#b74bff] focus:bg-gray-800 focus:outline-none transition-all"
+            className="mt-3 sm:mt-4 w-full rounded border-2 border-gray-800 bg-[#1e293b] px-3 sm:px-4 py-2.5 sm:py-3 text-sm text-gray-200 placeholder:text-gray-500 focus:border-[#b74bff] focus:bg-gray-800 focus:outline-none transition-all resize-y"
             value={value}
             rows={3}
             onChange={(event) => updateAnswer(question.id, event.target.value)}

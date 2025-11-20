@@ -1237,38 +1237,52 @@ export default function ConversationPage() {
                   )}
 
                   {inputMode === "chat" ? (
-                    <UniversalInput 
-                      text={chatInput} 
-                      onTextChange={setChatInput} 
-                      image={image} 
-                      onImageSelect={handleFileSelected}
-                      persona={persona}
-                      onPersonaChange={setPersona}
-                      conversationContext={conversationContext}
-                      onConversationContextChange={setConversationContext}
-                      onAnalyze={() => handleSendChatMessage(image)}
-                      isAnalyzing={isSendingChat}
-                      isClarifying={false}
-                      error={null}
-                      chatMode={true}
-                    />
+                    <>
+                      <UniversalInput 
+                        text={chatInput} 
+                        onTextChange={setChatInput} 
+                        image={image} 
+                        onImageSelect={handleFileSelected}
+                        persona={persona}
+                        onPersonaChange={setPersona}
+                        conversationContext={conversationContext}
+                        onConversationContextChange={setConversationContext}
+                        onAnalyze={() => handleSendChatMessage(image)}
+                        isAnalyzing={isSendingChat}
+                        isClarifying={false}
+                        error={null}
+                        chatMode={true}
+                      />
+                      <div className="rounded-lg border border-slate-800/50 bg-slate-900/30 p-3">
+                        <p className="text-xs text-slate-400">
+                          <span className="font-medium text-slate-300">Privacy:</span> Your conversations are private. Administrators cannot access your messages or responses. Only aggregated analysis metrics are visible.
+                        </p>
+                      </div>
+                    </>
                   ) : (
                     <>
                       {currentStep === "upload" ? (
-                        <UniversalInput 
-                          text={textInput} 
-                          onTextChange={setTextInput} 
-                          image={image} 
-                          onImageSelect={handleFileSelected}
-                          persona={persona}
-                          onPersonaChange={setPersona}
-                          conversationContext={conversationContext}
-                          onConversationContextChange={setConversationContext}
-                          onAnalyze={handleAnalyzeClick}
-                          isAnalyzing={isAnalyzingStep}
-                          isClarifying={isClarifying}
-                          error={error}
-                        />
+                        <>
+                          <UniversalInput 
+                            text={textInput} 
+                            onTextChange={setTextInput} 
+                            image={image} 
+                            onImageSelect={handleFileSelected}
+                            persona={persona}
+                            onPersonaChange={setPersona}
+                            conversationContext={conversationContext}
+                            onConversationContextChange={setConversationContext}
+                            onAnalyze={handleAnalyzeClick}
+                            isAnalyzing={isAnalyzingStep}
+                            isClarifying={isClarifying}
+                            error={error}
+                          />
+                          <div className="rounded-lg border border-slate-800/50 bg-slate-900/30 p-3">
+                            <p className="text-xs text-slate-400">
+                              <span className="font-medium text-slate-300">Privacy:</span> Your conversations are private. Administrators cannot access your messages or responses. Only aggregated analysis metrics are visible.
+                            </p>
+                          </div>
+                        </>
                       ) : currentStep === "analyzing" ? (
                         <div className="flex items-center justify-center gap-3 py-8">
                           <div className="relative h-8 w-8">

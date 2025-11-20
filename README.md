@@ -21,7 +21,8 @@ This repo hosts the server-rendered Textopsy experience. The previous Vite SPA h
   - `PAYSTACK_CURRENCY` (optional, defaults to `USD` unless `PAYSTACK_PRO_AMOUNT_KOBO` is provided) - ISO currency code sent to Paystack.
   - `PAYSTACK_PLAN_CODE` (optional) - Paystack plan code if you manage subscriptions inside Paystack
 - `PRO_MAX_CREDITS_PER_MONTH` (optional, defaults to `200`) - per-Pro-user monthly credit cap
-- `ADMIN_DASHBOARD_TOKEN` - shared secret for the `/admin` dashboard + `/api/admin/credits`
+- `ADMIN_DASHBOARD_TOKEN` - shared secret for the `/admin` dashboard + `/api/admin/credits` (legacy token-based access)
+- `ADMIN_EMAILS` - comma-separated list of admin email addresses (e.g., `admin@example.com,admin2@example.com`) for JWT-based admin access
   - `FREE_PLAN_MAX_CONVERSATIONS` / `FREE_PLAN_MAX_SUBMISSIONS_PER_DAY` (optional overrides for freemium limits)
   - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_SECURE` (`true`/`false`) for outbound email
   - `EMAIL_FROM_ADDRESS` (e.g. `Textopsy <hello@textopsy.com>`) and optional `EMAIL_REPLY_TO`
@@ -112,4 +113,8 @@ Migrations will run automatically during build/start. Ensure `DATABASE_URL` is s
 - The Gemini integration sits in `lib/analyzeConversation.ts` and is only imported by server routes.
 - Database access is handled via `lib/db/` using Drizzle ORM with PostgreSQL.
 - Styling relies on Tailwind CSS v4 via the new `@tailwindcss/postcss` plugin plus a few custom globals in `app/globals.css`.
-- Internal credit monitoring lives at `/admin`. Supply `ADMIN_DASHBOARD_TOKEN` in the UI to fetch `/api/admin/credits`, which lists each user's monthly usage against the (default) 200-credit cap.
+- Admin panel lives at `/admin` with JWT-based authentication:
+  - Set `ADMIN_EMAILS` environment variable (comma-separated list of admin emails)
+  - Admins must log in with their regular account credentials
+  - Features include: Dashboard, User Management (assign/remove pro membership), Conversations, Analytics
+  - Legacy token-based access still available via `ADMIN_DASHBOARD_TOKEN` for `/api/admin/credits`

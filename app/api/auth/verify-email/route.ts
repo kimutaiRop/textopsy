@@ -5,52 +5,66 @@ import { decodeEmailVerificationToken } from "@/lib/auth";
 import { db, users } from "@/lib/db";
 
 export async function GET(request: Request) {
-  const url = new URL(request.url);
-  const token = url.searchParams.get("token");
+  try {
+    const url = new URL(request.url);
+    const token = url.searchParams.get("token");
 
-  if (!token) {
-    return respond(request, { success: false, message: "Verification token is required." }, 400);
-  }
+    if (!token) {
+      return respond(request, { success: false, message: "Verification token is required." }, 400);
+    }
 
-  const decoded = decodeEmailVerificationToken(token);
+    const decoded = decodeEmailVerificationToken(token);
 
-  if (!decoded) {
-    return respond(request, { success: false, message: "Invalid or expired verification token." }, 400);
-  }
+    if (!decoded) {
+      return respond(request, { success: false, message: "Invalid or expired verification token." }, 400);
+    }
 
-  const [existing] = await db
-    .select({
-      id: users.id,
-      emailVerifiedAt: users.emailVerifiedAt,
-    })
-    .from(users as any)
-    .where(eq(users.id, decoded.id) as any)
-    .limit(1);
-
-  if (!existing) {
-    return respond(request, { success: false, message: "Account not found." }, 404);
-  }
-
-  if (!existing.emailVerifiedAt) {
-    await db
-      .update(users as any)
-      .set({
-        emailVerifiedAt: new Date(),
-        updatedAt: new Date(),
+    const [existing] = await db
+      .select({
+        id: users.id,
+        emailVerifiedAt: users.emailVerifiedAt,
       })
-      .where(eq(users.id, decoded.id) as any);
-  }
+      .from(users as any)
+      .where(eq(users.id, decoded.id) as any)
+      .limit(1);
 
-  return respond(request, { success: true, message: "Email verified." }, 302);
+    if (!existing) {
+      return respond(request, { success: false, message: "Account not found." }, 404);
+    }
+
+    if (!existing.emailVerifiedAt) {
+      await db
+        .update(users as any)
+        .set({
+          emailVerifiedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, decoded.id) as any);
+    }
+
+    return respond(request, { success: true, message: "Email verified." }, 302);
+  } catch (error) {
+    console.error("[verify-email] Error:", error);
+    return respond(
+      request,
+      { success: false, message: error instanceof Error ? error.message : "An error occurred during verification." },
+      500
+    );
+  }
 }
 
 function respond(request: Request, body: { success: boolean; message: string }, status: number) {
-  const redirectTarget = getRedirectUrl(body.success ? "success" : "error", request);
+  try {
+    const redirectTarget = getRedirectUrl(body.success ? "success" : "error", request);
 
-  if (redirectTarget) {
-    const url = new URL(redirectTarget);
-    url.searchParams.set("message", body.message);
-    return NextResponse.redirect(url, { status: body.success ? 302 : status });
+    if (redirectTarget) {
+      const url = new URL(redirectTarget);
+      url.searchParams.set("message", body.message);
+      return NextResponse.redirect(url, { status: body.success ? 302 : status });
+    }
+  } catch (error) {
+    console.error("[verify-email] Redirect error:", error);
+    // Fall through to JSON response if redirect fails
   }
 
   return NextResponse.json(body, { status });

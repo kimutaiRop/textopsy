@@ -6,6 +6,7 @@ import type { AnalysisResult } from "@/types/analysis";
 import {
   IconArrowLeft,
   IconBrutal,
+  IconCharismatic,
   IconCheckCircle,
   IconChevronDown,
   IconCopy,
@@ -41,6 +42,7 @@ const personaIcons: Record<Persona, ReactNode> = {
   [Persona.TOXIC_EX]: <IconToxic className="h-4 w-4" />,
   [Persona.FBI_PROFILER]: <IconFBI className="h-4 w-4" />,
   [Persona.GEN_Z_ROASTER]: <IconRoaster className="h-4 w-4" />,
+  [Persona.CHARISMATIC_FLIRT]: <IconCharismatic className="h-4 w-4" />,
 };
 
 const getScoreColor = (score: number, invert = false) => {

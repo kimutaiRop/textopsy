@@ -73,6 +73,7 @@ export async function POST(request: Request) {
         isPro: normalizedPlan.isPro,
         emailVerifiedAt: user.emailVerifiedAt ? user.emailVerifiedAt.toISOString() : null,
         isEmailVerified: Boolean(user.emailVerifiedAt),
+        gender: user.gender || null,
       },
     });
   } catch (error) {

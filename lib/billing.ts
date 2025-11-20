@@ -61,6 +61,8 @@ export type UserPlanRecord = User & {
   paystackAuthorizationCode: string | null;
 };
 
+import { GenderOption } from "@/types/analysis";
+
 export type UserPlanInfo = {
   id: string;
   email: string;
@@ -70,6 +72,7 @@ export type UserPlanInfo = {
   paystackCustomerCode: string | null;
   paystackAuthorizationCode: string | null;
   emailVerifiedAt: Date | null;
+  gender: GenderOption | null;
 };
 
 export type UsageSnapshot = {
@@ -126,6 +129,7 @@ export async function getUserPlanInfo(userId: string): Promise<UserPlanInfo | nu
       paystackCustomerCode: users.paystackCustomerCode,
       paystackAuthorizationCode: users.paystackAuthorizationCode,
       emailVerifiedAt: users.emailVerifiedAt,
+      gender: users.gender,
     })
     .from(users as any)
     .where(eq(users.id, userId) as any)
@@ -158,6 +162,7 @@ export async function getUserPlanInfo(userId: string): Promise<UserPlanInfo | nu
     paystackCustomerCode: record.paystackCustomerCode,
     paystackAuthorizationCode: record.paystackAuthorizationCode,
     emailVerifiedAt: record.emailVerifiedAt ?? null,
+    gender: record.gender ?? null,
   };
 }
 
@@ -415,6 +420,7 @@ export async function serializeUserForClient(user: UserPlanInfo) {
     isPro: user.isPro,
     emailVerifiedAt: user.emailVerifiedAt ? user.emailVerifiedAt.toISOString() : null,
     isEmailVerified: Boolean(user.emailVerifiedAt),
+    gender: user.gender ?? null,
   });
 }
 

@@ -323,13 +323,30 @@ export async function POST(request: Request) {
       console.error("🆕 [ANALYZE] Creating new conversation");
     }
 
+    // Build context with user gender if available
+    let enhancedContext = payload.context;
+    if (planInfo.gender && planInfo.gender !== "unknown") {
+      if (!enhancedContext) {
+        enhancedContext = {
+          perspective: payload.context?.perspective || "their_messages" as any,
+        };
+      }
+      if (!enhancedContext.user) {
+        enhancedContext.user = {};
+      }
+      // Only set gender if not already set by user in context
+      if (!enhancedContext.user.gender) {
+        enhancedContext.user.gender = planInfo.gender as any;
+      }
+    }
+
     console.error("🤖 [ANALYZE] Calling Gemini API...", {
       inputType: finalInput.type,
       persona: payload.persona,
       elapsed: Date.now() - startTime + "ms",
     });
     
-    const result = await analyzeConversation(finalInput, payload.persona, payload.context || undefined);
+    const result = await analyzeConversation(finalInput, payload.persona, enhancedContext || undefined);
     
     console.error("✅ [ANALYZE] Gemini API responded:", {
       hasResult: !!result,

@@ -8,6 +8,7 @@ import { ResultsView } from "@/components/ResultsView";
 import { UniversalInput } from "@/components/UniversalInput";
 import { ConversationSidebar } from "@/components/ConversationSidebar";
 import { AuthModal } from "@/components/AuthModal";
+import { GenderModal } from "@/components/GenderModal";
 import { IconArrowLeft, IconLogo, IconPlay } from "@/components/Icons";
 import { ClarificationModal } from "@/components/ClarificationModal";
 import { applyClarificationAnswers } from "@/lib/contextUtils";
@@ -78,6 +79,7 @@ export default function HomePageClient() {
   const [isClarifying, setIsClarifying] = useState(false);
   const [clarificationRequest, setClarificationRequest] = useState<PendingClarification | null>(null);
   const [clarificationSubmitting, setClarificationSubmitting] = useState(false);
+  const [genderModalOpen, setGenderModalOpen] = useState(false);
 
   const handleFileSelected = (file: File | null) => {
     setError(null);
@@ -120,9 +122,17 @@ export default function HomePageClient() {
                   data.user || (userStr ? (JSON.parse(userStr) as StoredUser) : null);
                 if (storedUser) {
                   setUser(storedUser);
+                  // Show gender modal if gender is missing
+                  if (!storedUser.gender || storedUser.gender === "unknown") {
+                    setGenderModalOpen(true);
+                  }
                 }
               } catch {
-                setUser(data.user ?? null);
+                const storedUser = data.user ?? null;
+                setUser(storedUser);
+                if (storedUser && (!storedUser.gender || storedUser.gender === "unknown")) {
+                  setGenderModalOpen(true);
+                }
               }
             } else {
               localStorage.removeItem("textopsy_auth_token");
@@ -478,6 +488,11 @@ export default function HomePageClient() {
     setUser(userData);
     setAuthModalOpen(false);
     
+    // Show gender modal if gender is missing
+    if (!userData.gender || userData.gender === "unknown") {
+      setGenderModalOpen(true);
+    }
+    
     // The useEffect will handle restoring form data and auto-submitting
   };
 
@@ -510,6 +525,15 @@ export default function HomePageClient() {
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
         onAuthSuccess={handleAuthSuccess}
+      />
+      <GenderModal
+        isOpen={genderModalOpen}
+        onClose={() => setGenderModalOpen(false)}
+        onSave={(updatedUser) => {
+          setUser(updatedUser);
+          setGenderModalOpen(false);
+        }}
+        authToken={authToken}
       />
       
       <ConversationSidebar

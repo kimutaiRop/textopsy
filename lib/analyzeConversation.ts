@@ -204,9 +204,7 @@ function describeContextGaps(context?: ConversationContext): string[] {
   if (!context.partner?.role) {
     gaps.push("partner role unknown");
   }
-  if (!context.user?.gender || context.user.gender === GenderOption.UNKNOWN) {
-    gaps.push("user gender unspecified");
-  }
+  // Note: user gender is now stored in user profile, so we don't check for it here
   if (!context.partner?.gender || context.partner.gender === GenderOption.UNKNOWN) {
     gaps.push("partner gender unspecified");
   }
@@ -230,7 +228,9 @@ export async function assessClarificationNeeds(
   const ai = getAI();
   const contextInstruction = buildContextInstruction(conversationContext);
   const gaps = describeContextGaps(conversationContext);
+  // Filter out userGender since it's stored in user profile
   const allowedAreas = Object.entries(clarificationAreaPrompts)
+    .filter(([area]) => area !== "userGender")
     .map(([area, detail]) => `- ${area}: ${detail}`)
     .join("\n");
 
@@ -287,7 +287,7 @@ Rules:
 - Max 2 questions.
 - If everything essential is present, respond with clarificationNeeded=false.
 - Prefer clarity over quantity; skip obvious or already provided details.
-- IMPORTANT - Gender clarification: If gender information is unclear for BOTH parties (user and other person), you should ask questions for BOTH userGender AND partnerGender (as separate questions, up to the 2 question max). Don't ask for only one gender if both are unclear - ask for both.
+- IMPORTANT - Gender clarification: The user's gender is stored in their profile, so you should NOT ask about userGender. Only ask about partnerGender if the other person's gender is unclear.
 
 Return strictly valid JSON that matches the clarification schema.
 `.trim();

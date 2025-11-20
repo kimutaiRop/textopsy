@@ -11,10 +11,11 @@ import { normalizePlan } from "@/lib/billing";
 import { generateId } from "@/lib/conversation";
 import { db, users } from "@/lib/db";
 import { sendVerificationEmail } from "@/lib/email";
+import { GenderOption } from "@/types/analysis";
 
 export async function POST(request: Request) {
   try {
-    const { email, password } = await request.json();
+    const { email, password, gender } = await request.json();
 
     if (!email || !password) {
       return NextResponse.json(
@@ -26,6 +27,14 @@ export async function POST(request: Request) {
     if (password.length < 6) {
       return NextResponse.json(
         { error: "Password must be at least 6 characters" },
+        { status: 400 }
+      );
+    }
+
+    // Validate gender if provided
+    if (gender && !Object.values(GenderOption).includes(gender)) {
+      return NextResponse.json(
+        { error: "Invalid gender value" },
         { status: 400 }
       );
     }
@@ -54,6 +63,7 @@ export async function POST(request: Request) {
         id: userId,
       email: normalizedEmail,
         passwordHash,
+        gender: gender || null,
     });
 
     // Generate token
@@ -82,6 +92,7 @@ export async function POST(request: Request) {
         isPro: normalizedPlan.isPro,
         emailVerifiedAt: null,
         isEmailVerified: false,
+        gender: gender || null,
       },
     });
   } catch (error) {

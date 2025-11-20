@@ -7,6 +7,7 @@ import { ResultsView } from "@/components/ResultsView";
 import { UniversalInput } from "@/components/UniversalInput";
 import { ConversationSidebar } from "@/components/ConversationSidebar";
 import { AuthModal } from "@/components/AuthModal";
+import { GenderModal } from "@/components/GenderModal";
 import { IconArrowLeft, IconLogo, IconPlay, IconInfo, IconMessageSquare, IconClose, IconSearch } from "@/components/Icons";
 import { ClarificationModal } from "@/components/ClarificationModal";
 import { ContextViewModal } from "@/components/ContextViewModal";
@@ -101,6 +102,7 @@ export default function ConversationPage() {
   const [authToken, setAuthToken] = useState<string | null>(null);
   const [user, setUser] = useState<StoredUser | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [genderModalOpen, setGenderModalOpen] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [conversationData, setConversationData] = useState<ConversationData | null>(null);
   const [previousResults, setPreviousResults] = useState<Array<AnalysisResult & { id?: string; persona: Persona; inputPreview: { type: "text"; content: string } | { type: "image"; url: string }; originalInput?: { type: "text"; content: string } | { type: "image"; base64: string; mimeType: string }; timestamp: Date }>>([]);
@@ -177,9 +179,17 @@ export default function ConversationPage() {
                   data.user || (userStr ? (JSON.parse(userStr) as StoredUser) : null);
                 if (storedUser) {
                   setUser(storedUser);
+                  // Show gender modal if gender is missing
+                  if (!storedUser.gender || storedUser.gender === "unknown") {
+                    setGenderModalOpen(true);
+                  }
                 }
               } catch {
-                setUser(data.user ?? null);
+                const storedUser = data.user ?? null;
+                setUser(storedUser);
+                if (storedUser && (!storedUser.gender || storedUser.gender === "unknown")) {
+                  setGenderModalOpen(true);
+                }
               }
             } else {
               localStorage.removeItem("textopsy_auth_token");
@@ -973,6 +983,11 @@ export default function ConversationPage() {
     setAuthModalOpen(false);
     setUpgradeError(null);
     refreshLimits();
+    
+    // Show gender modal if gender is missing
+    if (!userData.gender || userData.gender === "unknown") {
+      setGenderModalOpen(true);
+    }
   };
 
   const handleLogout = () => {
@@ -1007,6 +1022,15 @@ export default function ConversationPage() {
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
         onAuthSuccess={handleAuthSuccess}
+      />
+      <GenderModal
+        isOpen={genderModalOpen}
+        onClose={() => setGenderModalOpen(false)}
+        onSave={(updatedUser) => {
+          setUser(updatedUser);
+          setGenderModalOpen(false);
+        }}
+        authToken={authToken}
       />
       
       <ConversationSidebar

@@ -1,5 +1,6 @@
 import { pgTable, text, integer, timestamp, json, index, date, uniqueIndex } from "drizzle-orm/pg-core";
 import type { ConversationContext } from "@/types/analysis";
+import { GenderOption } from "@/types/analysis";
 
 export const users = pgTable(
   "users",
@@ -15,6 +16,7 @@ export const users = pgTable(
     paystackAuthorizationCode: text("paystack_authorization_code"),
     emailVerifiedAt: timestamp("email_verified_at"),
     lastRenewalReminderAt: timestamp("last_renewal_reminder_at"),
+    gender: text("gender").$type<GenderOption>(),
   },
   (table) => ({
     emailIdx: index("users_email_idx").on(table.email),

@@ -1,3 +1,5 @@
+import { GenderOption } from "@/types/analysis";
+
 export type StoredUser = {
   id: string;
   email: string;
@@ -6,5 +8,6 @@ export type StoredUser = {
   isPro?: boolean;
   emailVerifiedAt?: string | null;
   isEmailVerified?: boolean;
+  gender?: GenderOption | null;
 };
 

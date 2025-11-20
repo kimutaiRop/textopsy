@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { IconLogo } from "./Icons";
 import type { StoredUser } from "@/types/user";
+import { GenderOption } from "@/types/analysis";
+import { genderOptions } from "@/lib/contextOptions";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -14,6 +16,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [gender, setGender] = useState<GenderOption | "">("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -24,10 +27,13 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
 
     try {
       const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/register";
+      const body = mode === "register" 
+        ? { email, password, gender: gender || undefined }
+        : { email, password };
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(body),
       });
 
       const data = await response.json();
@@ -48,6 +54,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
       onClose();
       setEmail("");
       setPassword("");
+      setGender("");
       setLoading(false);
     } catch (err) {
       // Network errors or JSON parsing errors
@@ -130,6 +137,30 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
             )}
           </div>
 
+          {mode === "register" && (
+            <div>
+              <label htmlFor="gender" className="mb-2 block text-sm font-medium text-gray-300">
+                Gender <span className="text-xs text-gray-500">(optional)</span>
+              </label>
+              <select
+                id="gender"
+                value={gender}
+                onChange={(e) => setGender(e.target.value as GenderOption | "")}
+                className="w-full rounded border border-gray-700 bg-gray-900 px-4 py-2 text-white focus:border-[#b74bff] focus:outline-none focus:ring-1 focus:ring-[#b74bff]"
+              >
+                <option value="">Select gender (optional)</option>
+                {genderOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-gray-500">
+                This helps us personalize your analysis. You can skip this if you prefer.
+              </p>
+            </div>
+          )}
+
           {error && (
             <div className="rounded border border-red-900 bg-red-900/20 px-4 py-2 text-sm text-red-400">
               {error}
@@ -153,6 +184,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
                 onClick={() => {
                   setMode("register");
                   setError(null);
+                  setGender("");
                 }}
                 className="text-[#b74bff] hover:underline"
               >
@@ -166,6 +198,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
                 onClick={() => {
                   setMode("login");
                   setError(null);
+                  setGender("");
                 }}
                 className="text-[#b74bff] hover:underline"
               >

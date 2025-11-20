@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 
-import { calculateProExpiry, getPlanManagementUrl } from "@/lib/billing";
+import { calculateProExpiry, getPlanManagementUrl, getUserPlanInfo } from "@/lib/billing";
 import { formatAmountFromMinorUnits } from "@/lib/currency";
 import { generateId } from "@/lib/conversation";
 import { db, paystackTransactions, users } from "@/lib/db";
@@ -94,6 +94,15 @@ async function handlePaymentSuccess(eventName: string, data: any) {
   // Security: Verify payment status is actually success
   if (data?.status !== "success") {
     console.warn(`[paystack:webhook] Payment status is not success for reference ${reference}`, data?.status);
+    return;
+  }
+
+  // Security: Check if user already has active Pro plan (prevent duplicate upgrades)
+  const currentPlanInfo = await getUserPlanInfo(userId);
+  if (currentPlanInfo?.isPro) {
+    // User already has Pro plan, just update transaction record
+    await upsertTransactionRecord(userId, data);
+    console.log(`[paystack:webhook] User ${userId} already has Pro plan, skipping upgrade for reference ${reference}`);
     return;
   }
 

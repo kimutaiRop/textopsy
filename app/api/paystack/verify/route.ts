@@ -87,6 +87,28 @@ export async function POST(request: Request) {
       );
     }
 
+    // Security: Check if user is already Pro (prevent duplicate upgrades)
+    const currentPlanInfo = await getUserPlanInfo(authUser.id);
+    if (currentPlanInfo?.isPro) {
+      // User already has Pro plan, just update transaction status
+      await db
+        .update(paystackTransactions as any)
+        .set({
+          status: verification.status,
+          channel: verification.channel ?? transaction.channel,
+          metadata: verification.metadata ?? transaction.metadata,
+          updatedAt: new Date(),
+        })
+        .where(eq(paystackTransactions.reference, reference) as any);
+
+      return NextResponse.json({
+        success: true,
+        plan: currentPlanInfo.plan,
+        planExpiresAt: currentPlanInfo.planExpiresAt ? currentPlanInfo.planExpiresAt.toISOString() : null,
+        message: "You already have an active Pro plan.",
+      });
+    }
+
     const expiresAt = await calculateProExpiry();
 
     await db

@@ -115,6 +115,7 @@ export default function ConversationPage() {
   const [chatInput, setChatInput] = useState("");
   const [isSendingChat, setIsSendingChat] = useState(false);
   const [inputMode, setInputMode] = useState<"analysis" | "chat">("chat");
+  const [privacyNoteOpen, setPrivacyNoteOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const skipNextContextPersistRef = useRef(false);
@@ -1042,9 +1043,9 @@ export default function ConversationPage() {
       />
 
       <div className={`flex flex-1 flex-col transition-all ${sidebarOpen ? "ml-80" : ""}`}>
-        <header className="sticky top-0 z-20 border-b border-gray-800 bg-[#0f172a] px-6 py-4">
-          <div className="mx-auto flex max-w-6xl items-center justify-between">
-            <div className="flex flex-wrap items-center gap-3">
+        <header className="sticky top-0 z-20 border-b border-gray-800 bg-[#0f172a] px-4 py-3 sm:px-6 sm:py-4">
+          <div className="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <button
                 type="button"
                 onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -1080,7 +1081,7 @@ export default function ConversationPage() {
                 <span>Context</span>
               </button>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
               <button
                 type="button"
                 onClick={() => router.push("/plan")}
@@ -1112,8 +1113,8 @@ export default function ConversationPage() {
 
         <main className={`relative flex flex-1 flex-col ${sidebarOpen ? "ml-0" : ""}`}>
           {/* Scrollable chat area with previous analyses and chat messages */}
-          <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-6 py-6">
-            <div className="mx-auto max-w-4xl space-y-6">
+          <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
+            <div className="mx-auto max-w-4xl space-y-4 sm:space-y-6">
               {/* Combine chat messages and analyses, sorted by timestamp */}
               {[
                 ...chatMessages.map((msg) => ({
@@ -1122,9 +1123,9 @@ export default function ConversationPage() {
                   timestamp: msg.createdAt,
                   data: msg,
                 })),
-                ...previousResults.map((result) => ({
+                ...previousResults.map((result, index) => ({
                   type: "analysis" as const,
-                  id: result.id || `analysis-${Date.now()}`,
+                  id: result.id || `analysis-${index}-${result.timestamp?.getTime() ?? Date.now()}`,
                   timestamp: result.timestamp || new Date(),
                   data: result,
                 })),
@@ -1143,7 +1144,7 @@ export default function ConversationPage() {
                         className={`group relative flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                       >
                         <div
-                          className={`relative max-w-[80%] rounded-lg px-4 py-2 ${
+                          className={`relative max-w-[85%] rounded-lg px-4 py-2 ${
                             msg.role === "user"
                               ? "bg-[#b74bff] text-white"
                               : "bg-[#1e293b] border border-gray-800 text-gray-200"
@@ -1167,17 +1168,16 @@ export default function ConversationPage() {
                   } else {
                     const result = item.data as typeof previousResults[0];
                     return (
-                      <div key={`analysis-${result.id}`} className="rounded-lg border border-gray-800 bg-[#1e293b] p-6">
-                    <ResultsView
-                          result={result}
-                          persona={result.persona}
-                          inputPreview={result.inputPreview}
-                      onReset={handleReset}
-                          onReanalyze={(newPersona) => handleReanalyze(newPersona, result.originalInput, result.id)}
-                          onDelete={result.id ? () => handleDeleteAnalysis(result.id!) : undefined}
-                          showDelete={!!result.id}
-                    />
-                  </div>
+                      <ResultsView
+                        key={`analysis-${item.id}`}
+                        result={result}
+                        persona={result.persona}
+                        inputPreview={result.inputPreview}
+                        onReset={handleReset}
+                        onReanalyze={(newPersona) => handleReanalyze(newPersona, result.originalInput, result.id)}
+                        onDelete={result.id ? () => handleDeleteAnalysis(result.id!) : undefined}
+                        showDelete={!!result.id}
+                      />
                     );
                   }
                 })}
@@ -1187,7 +1187,7 @@ export default function ConversationPage() {
           </div>
 
           {/* Always visible compose input at bottom */}
-          <div className="sticky bottom-0 overflow-visible border-t border-gray-800 bg-[#0f172a] px-6 py-4">
+          <div className="sticky bottom-0 overflow-visible border-t border-gray-800 bg-[#0f172a] px-4 py-3 sm:px-6 sm:py-4">
             <div className="mx-auto max-w-4xl overflow-visible">
               {reanalyzingId ? (
                 <div className="flex items-center justify-center gap-3 py-8">
@@ -1200,29 +1200,43 @@ export default function ConversationPage() {
               ) : (
                 <div>
                   {/* Mode toggle - subtle design */}
-                  <div className="mb-3 flex items-center justify-end gap-2">
+                  <div className="mb-3 flex items-center justify-between">
                     <button
-                      onClick={() => setInputMode("chat")}
-                      className={`rounded-full p-2 transition-all ${
-                        inputMode === "chat"
-                          ? "bg-[#b74bff]/20 text-[#b74bff]"
-                          : "text-gray-500 hover:bg-gray-800/50 hover:text-gray-300"
+                      type="button"
+                      onClick={() => setPrivacyNoteOpen((prev) => !prev)}
+                      aria-controls="privacy-note"
+                      aria-expanded={privacyNoteOpen}
+                      className={`sm:hidden rounded-full border border-gray-800 p-2 text-gray-400 transition-colors ${
+                        privacyNoteOpen ? "border-[#b74bff]/40 bg-[#b74bff]/10 text-[#b74bff]" : "hover:border-gray-700 hover:text-white"
                       }`}
-                      title="Chat mode"
+                      title="Privacy info"
                     >
-                      <IconMessageSquare className="h-4 w-4" />
+                      <IconInfo className="h-4 w-4" />
                     </button>
-                    <button
-                      onClick={() => setInputMode("analysis")}
-                      className={`rounded-full p-2 transition-all ${
-                        inputMode === "analysis"
-                          ? "bg-[#b74bff]/20 text-[#b74bff]"
-                          : "text-gray-500 hover:bg-gray-800/50 hover:text-gray-300"
-                      }`}
-                      title="Analysis mode"
-                    >
-                      <IconSearch className="h-4 w-4" />
-                    </button>
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <button
+                        onClick={() => setInputMode("chat")}
+                        className={`rounded-full p-2 transition-all ${
+                          inputMode === "chat"
+                            ? "bg-[#b74bff]/20 text-[#b74bff]"
+                            : "text-gray-500 hover:bg-gray-800/50 hover:text-gray-300"
+                        }`}
+                        title="Chat mode"
+                      >
+                        <IconMessageSquare className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => setInputMode("analysis")}
+                        className={`rounded-full p-2 transition-all ${
+                          inputMode === "analysis"
+                            ? "bg-[#b74bff]/20 text-[#b74bff]"
+                            : "text-gray-500 hover:bg-gray-800/50 hover:text-gray-300"
+                        }`}
+                        title="Analysis mode"
+                      >
+                        <IconSearch className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
 
                   {error && (
@@ -1277,7 +1291,7 @@ export default function ConversationPage() {
                         error={null}
                         chatMode={true}
                       />
-                      <div className="rounded-lg border border-slate-800/50 bg-slate-900/30 p-3">
+                      <div id="privacy-note" className={`${privacyNoteOpen ? "block" : "hidden"} rounded-lg border border-slate-800/50 bg-slate-900/30 p-3 sm:block`}>
                         <p className="text-xs text-slate-400">
                           <span className="font-medium text-slate-300">Privacy:</span> Your conversations are private. Administrators cannot access your messages or responses. Only aggregated analysis metrics are visible.
                         </p>
@@ -1301,7 +1315,7 @@ export default function ConversationPage() {
                             isClarifying={isClarifying}
                             error={error}
                           />
-                          <div className="rounded-lg border border-slate-800/50 bg-slate-900/30 p-3">
+                          <div id="privacy-note" className={`${privacyNoteOpen ? "block" : "hidden"} rounded-lg border border-slate-800/50 bg-slate-900/30 p-3 sm:block`}>
                             <p className="text-xs text-slate-400">
                               <span className="font-medium text-slate-300">Privacy:</span> Your conversations are private. Administrators cannot access your messages or responses. Only aggregated analysis metrics are visible.
                             </p>

@@ -47,20 +47,42 @@ export function UniversalInput({
 }: UniversalInputProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [personaMenuOpen, setPersonaMenuOpen] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const personaMenuRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-resize textarea
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const hasContent = !!text.trim() || !!image;
+  const isExpanded = !isMobile || isFocused || hasInteracted || hasContent;
+
+  useEffect(() => {
+    if (hasContent) {
+      setHasInteracted(true);
+    }
+  }, [hasContent]);
+
+  useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = "auto";
       const scrollHeight = textareaRef.current.scrollHeight;
-      const minHeight = 120; // Start small
-      const maxHeight = 400; // Max height
+      const minHeight = isExpanded ? 160 : 100;
+      const maxHeight = isMobile ? 320 : 400;
       textareaRef.current.style.height = `${Math.min(Math.max(scrollHeight, minHeight), maxHeight)}px`;
     }
-  }, [text]);
+  }, [text, isExpanded, isMobile]);
 
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
@@ -118,7 +140,7 @@ export function UniversalInput({
   const isSubmitDisabled = (!image && !text.trim()) || isAnalyzing || isClarifying;
 
   return (
-    <div className="mx-auto mb-8 w-full space-y-4">
+    <div className="mx-auto mb-6 w-full space-y-4 sm:mb-8">
       <div
         className={`relative ${personaMenuOpen ? "overflow-visible" : "overflow-hidden"} rounded border-2 bg-[#1e293b] transition-colors duration-200 ${isDragging
             ? "border-[#b74bff] bg-[rgba(183,75,255,0.05)]"
@@ -130,16 +152,24 @@ export function UniversalInput({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        <div className="relative flex min-h-[120px] flex-col">
+        <div className={`relative flex flex-col ${isExpanded ? "min-h-[160px]" : "min-h-[100px]"} sm:min-h-[160px]`}>
           <textarea
             ref={textareaRef}
             value={text}
             onChange={(event) => onTextChange(event.target.value)}
             onPaste={handlePaste}
+            onFocus={() => {
+              setIsFocused(true);
+              setHasInteracted(true);
+            }}
+            onBlur={() => setIsFocused(false)}
             placeholder={chatMode ? "Ask a question or share an image...\n\nOr drop a screenshot." : "Paste conversation here...\n\nOr drop a screenshot."}
             className="w-full resize-none overflow-hidden bg-transparent p-4 pb-20 font-mono text-sm leading-relaxed text-gray-200 placeholder:text-gray-600 focus:outline-none"
             spellCheck={false}
-            style={{ minHeight: '120px', maxHeight: '400px' }}
+            style={{
+              minHeight: isExpanded ? "160px" : "100px",
+              maxHeight: isMobile ? "320px" : "400px",
+            }}
           />
 
 

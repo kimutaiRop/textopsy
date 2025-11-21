@@ -610,7 +610,7 @@ export default function HomePageClient() {
           </div>
         </header>
 
-        <main className={`relative flex flex-grow flex-col p-6 ${currentStep === "results" ? "" : "items-center justify-center"}`}>
+        <main className={`relative flex flex-grow flex-col p-4 sm:p-6 ${currentStep === "results" ? "" : "items-center justify-center"}`}>
         {currentStep === "upload" && (
           <div className="relative z-10 w-full max-w-4xl animate-in fade-in">
             <div className="mb-12 space-y-4 text-center">

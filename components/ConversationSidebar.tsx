@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { IconArrowLeft, IconClose } from "./Icons";
 import { onConversationListRefresh } from "@/lib/conversationEvents";
@@ -144,26 +145,22 @@ export function ConversationSidebar({
             <div className="p-4 text-center text-sm text-gray-500">No conversations yet</div>
           ) : (
             <div className="space-y-2">
-              <button
-                onClick={() => {
-                  router.push("/");
-                  onSelectConversation(null);
-                }}
-                className={`w-full rounded-lg border p-3 text-left transition-colors ${
+              <Link
+                href="/"
+                onClick={() => onSelectConversation(null)}
+                className={`block w-full rounded-lg border p-3 text-left transition-colors ${
                   pathname === "/" || currentConversationId === null
                     ? "border-[#b74bff]/30 bg-[#151f35] text-white shadow-[0_0_16px_rgba(183,75,255,0.08)]"
                     : "border-transparent bg-[#141d30] text-gray-300 hover:border-gray-700/40 hover:bg-[#1b253d]"
                 }`}
               >
                 <div className="text-xs font-bold">+ New Analysis</div>
-              </button>
+              </Link>
 
-              <button
-                onClick={() => {
-                  router.push("/plan");
-                  onSelectConversation(null);
-                }}
-                className={`w-full rounded-lg border p-3 text-left transition-colors ${
+              <Link
+                href="/plan"
+                onClick={() => onSelectConversation(null)}
+                className={`block w-full rounded-lg border p-3 text-left transition-colors ${
                   pathname === "/plan"
                     ? "border-[#38bdf8]/30 bg-[#122036] text-white shadow-[0_0_16px_rgba(56,189,248,0.15)]"
                     : "border-transparent bg-[#141d30] text-gray-300 hover:border-gray-700/40 hover:bg-[#1b253d]"
@@ -171,7 +168,7 @@ export function ConversationSidebar({
               >
                 <div className="text-xs font-bold text-white">Plan & Limits</div>
                 <p className="mt-1 text-[10px] uppercase tracking-widest text-gray-500">Usage details & upgrades</p>
-              </button>
+              </Link>
 
               {conversations.map((conv) => (
                 <div
@@ -182,24 +179,22 @@ export function ConversationSidebar({
                       : "border-transparent bg-[#141d30] hover:border-gray-700/40 hover:bg-[#1b253d]"
                   }`}
                 >
-                  <button
-                    onClick={() => {
-                      router.push(`/conversation/${conv.id}`);
-                      onSelectConversation(conv.id);
-                    }}
-                    className="w-full text-left"
+                  <Link
+                    href={`/conversation/${conv.id}`}
+                    onClick={() => onSelectConversation(conv.id)}
+                    className="block w-full"
                   >
                     <div className="mb-1 truncate text-xs font-bold text-white">
-                    {conv.title || conv.analyses[0]?.diagnosis || "Untitled"}
-                  </div>
-                  <div className="text-[10px] text-gray-500">
-                    {conv._count.analyses} analysis{conv._count.analyses !== 1 ? "es" : ""} •{" "}
-                    {conv._count.inputs} input{conv._count.inputs !== 1 ? "s" : ""}
-                  </div>
-                  <div className="mt-1 text-[10px] text-gray-600">
-                    {new Date(conv.updatedAt).toLocaleDateString()}
-                  </div>
-                </button>
+                      {conv.title || conv.analyses[0]?.diagnosis || "Untitled"}
+                    </div>
+                    <div className="text-[10px] text-gray-500">
+                      {conv._count.analyses} analysis{conv._count.analyses !== 1 ? "es" : ""} •{" "}
+                      {conv._count.inputs} input{conv._count.inputs !== 1 ? "s" : ""}
+                    </div>
+                    <div className="mt-1 text-[10px] text-gray-600">
+                      {new Date(conv.updatedAt).toLocaleDateString()}
+                    </div>
+                  </Link>
                   <button
                     onClick={async (e) => {
                       e.stopPropagation();

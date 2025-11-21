@@ -11,9 +11,15 @@ import { AuthModal } from "@/components/AuthModal";
 import { GenderModal } from "@/components/GenderModal";
 import { IconArrowLeft, IconLogo, IconPlay } from "@/components/Icons";
 import { ClarificationModal } from "@/components/ClarificationModal";
-import { applyClarificationAnswers } from "@/lib/contextUtils";
+import { applyClarificationAnswers, applyContextUpdates } from "@/lib/contextUtils";
 import { Persona, type ConversationContext, defaultConversationContext } from "@/types/analysis";
-import type { AnalysisResult, UploadedImage, ClarificationQuestion, AnalysisInput } from "@/types/analysis";
+import type {
+  AnalysisResult,
+  UploadedImage,
+  ClarificationQuestion,
+  AnalysisInput,
+  ClarificationCheckResult,
+} from "@/types/analysis";
 import type { StoredUser } from "@/types/user";
 import { emitConversationListRefresh } from "@/lib/conversationEvents";
 
@@ -317,6 +323,7 @@ export default function HomePageClient() {
     }
 
     const snapshot = options.contextOverride ?? conversationContext;
+    let workingContext = snapshot;
     const targetConversationId = options.conversationIdOverride ?? currentConversationId;
 
     setIsClarifying(true);
@@ -342,18 +349,20 @@ export default function HomePageClient() {
         throw new Error(errorData.error || `HTTP ${response.status}: Clarification check failed`);
       }
 
-      const clarification = (await response.json()) as {
-        clarificationNeeded: boolean;
-        questions?: ClarificationQuestion[];
-      };
+      const clarification = (await response.json()) as ClarificationCheckResult;
 
-      if (clarification.clarificationNeeded && clarification.questions && clarification.questions.length > 0) {
+      if (clarification.contextUpdates) {
+        workingContext = applyContextUpdates(snapshot, clarification.contextUpdates);
+        setConversationContext(workingContext);
+      }
+
+      if (clarification.clarificationNeeded && clarification.questions.length > 0) {
         setClarificationRequest({
           persona: selectedPersona,
           input,
           continueConversation: options.continueConversation,
           conversationId: targetConversationId,
-          contextSnapshot: snapshot,
+          contextSnapshot: workingContext,
           questions: clarification.questions,
         });
         return;
@@ -376,7 +385,7 @@ export default function HomePageClient() {
       input,
       targetConversationId,
       options.continueConversation,
-      snapshot
+      workingContext
     );
   };
 

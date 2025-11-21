@@ -51,10 +51,16 @@ export interface ClarificationQuestion {
   suggestedAnswer?: string;
 }
 
+export interface ClarificationContextUpdates {
+  userRole?: string;
+  partnerRole?: string;
+}
+
 export interface ClarificationCheckResult {
   clarificationNeeded: boolean;
   rationale?: string;
   questions: ClarificationQuestion[];
+  contextUpdates?: ClarificationContextUpdates;
 }
 
 export enum ConversationPerspective {

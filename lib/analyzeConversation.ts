@@ -7,6 +7,7 @@ import type {
   AnalysisResult,
   ClarificationArea,
   ClarificationCheckResult,
+  ClarificationContextUpdates,
   ConversationContext,
   ParticipantDescriptor,
 } from "@/types/analysis";
@@ -92,6 +93,13 @@ const clarificationSchema: Schema = {
           suggestedAnswer: { type: Type.STRING },
         },
         required: ["id", "area", "question"],
+      },
+    },
+    contextUpdates: {
+      type: Type.OBJECT,
+      properties: {
+        userRole: { type: Type.STRING },
+        partnerRole: { type: Type.STRING },
       },
     },
   },
@@ -242,6 +250,26 @@ function truncateConversationText(content: string, limit = CLARIFICATION_MAX_PRE
   return content.slice(-limit);
 }
 
+function sanitizeContextUpdates(
+  updates?: ClarificationContextUpdates | null
+): ClarificationContextUpdates | undefined {
+  if (!updates) return undefined;
+  const sanitized: ClarificationContextUpdates = {};
+  if (typeof updates.userRole === "string") {
+    const trimmed = updates.userRole.trim();
+    if (trimmed) {
+      sanitized.userRole = trimmed;
+    }
+  }
+  if (typeof updates.partnerRole === "string") {
+    const trimmed = updates.partnerRole.trim();
+    if (trimmed) {
+      sanitized.partnerRole = trimmed;
+    }
+  }
+  return Object.keys(sanitized).length ? sanitized : undefined;
+}
+
 export async function assessClarificationNeeds(
   input: AnalysisInput,
   conversationContext?: ConversationContext
@@ -303,12 +331,19 @@ The person who wrote the message containing the quote is the actual sender.
 Quoted messages may be marked with [QUOTED FROM PersonName] ... [END QUOTE] tags.
 Only analyze messages as belonging to the person who actually sent them, not quoted names within them.
 
+Identity Inference Requirements:
+- If the user explicitly says "I'm <name> in this conversation" (or similar), treat that as authoritative: that name is the user.
+- If the transcript labels lines like "Dora:" or "John:", use those literal labels to determine roles instead of guessing.
+- Populate contextUpdates.userRole / contextUpdates.partnerRole with the exact labels you are confident in.
+- Only ask about userRole when, after reviewing the evidence (text or screenshot extraction), you still cannot determine who the user is. If unsure, state the uncertainty in your rationale and ask.
+
 Rules:
 - Only ask about the allowed areas above.
 - Max 2 questions.
 - If everything essential is present, respond with clarificationNeeded=false.
 - Prefer clarity over quantity; skip obvious or already provided details.
-- IMPORTANT - Gender clarification: The user's gender is stored in their profile, so you should NOT ask about userGender. Only ask about partnerGender if the other person's gender is unclear.
+- IMPORTANT - Gender clarification: The user's gender is stored in their profile, so you should NOT ask about userGender. Only ask about partnerGender if the other person's gender is unclear (consider common name like John, Jack, J, etc. to be a man and Emily, Emma, E, etc. to be a woman an d other common name taht can derive gender from context).
+- Always include contextUpdates in your JSON when you inferred either role (even if no questions are needed). Leave it empty/omit when nothing was confidently inferred.
 
 Return strictly valid JSON that matches the clarification schema.
 `.trim();
@@ -337,6 +372,7 @@ Return strictly valid JSON that matches the clarification schema.
     clarificationNeeded: !!parsed.clarificationNeeded,
     rationale: parsed.rationale,
     questions: Array.isArray(parsed.questions) ? parsed.questions : [],
+    contextUpdates: sanitizeContextUpdates(parsed.contextUpdates),
   };
 }
 

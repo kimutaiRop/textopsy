@@ -11,9 +11,15 @@ import { GenderModal } from "@/components/GenderModal";
 import { IconArrowLeft, IconLogo, IconPlay, IconInfo, IconMessageSquare, IconClose, IconSearch } from "@/components/Icons";
 import { ClarificationModal } from "@/components/ClarificationModal";
 import { ContextViewModal } from "@/components/ContextViewModal";
-import { applyClarificationAnswers } from "@/lib/contextUtils";
+import { applyClarificationAnswers, applyContextUpdates } from "@/lib/contextUtils";
 import { Persona, type ConversationContext, defaultConversationContext } from "@/types/analysis";
-import type { AnalysisResult, UploadedImage, ClarificationQuestion, AnalysisInput } from "@/types/analysis";
+import type {
+  AnalysisResult,
+  UploadedImage,
+  ClarificationQuestion,
+  AnalysisInput,
+  ClarificationCheckResult,
+} from "@/types/analysis";
 import { useBillingLimits } from "@/hooks/useBillingLimits";
 import type { StoredUser } from "@/types/user";
 import { emitConversationListRefresh } from "@/lib/conversationEvents";
@@ -331,6 +337,7 @@ export default function ConversationPage() {
     }
 
     const snapshot = options.contextOverride ?? conversationContext;
+    let workingContext = snapshot;
     setIsClarifying(true);
 
     try {
@@ -355,17 +362,19 @@ export default function ConversationPage() {
         throw new Error(errorData.error || `HTTP ${response.status}: Clarification check failed`);
       }
 
-      const clarification = (await response.json()) as {
-        clarificationNeeded: boolean;
-        questions?: ClarificationQuestion[];
-      };
+      const clarification = (await response.json()) as ClarificationCheckResult;
 
-      if (clarification.clarificationNeeded && clarification.questions && clarification.questions.length > 0) {
+      if (clarification.contextUpdates) {
+        workingContext = applyContextUpdates(snapshot, clarification.contextUpdates);
+        setConversationContext(workingContext);
+      }
+
+      if (clarification.clarificationNeeded && clarification.questions.length > 0) {
         setClarificationRequest({
           persona: selectedPersona,
           input,
           questions: clarification.questions,
-          contextSnapshot: snapshot,
+          contextSnapshot: workingContext,
           resetAnalyses: options.resetAnalyses,
         });
         return;
@@ -385,7 +394,7 @@ export default function ConversationPage() {
 
     await submitConversationAnalysis(selectedPersona, input, {
       resetAnalyses: options.resetAnalyses,
-      contextOverride: snapshot,
+      contextOverride: workingContext,
     });
   };
 

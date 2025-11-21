@@ -5,6 +5,7 @@ import {
   ClarificationArea,
   GenderOption,
   RelationshipType,
+  ClarificationContextUpdates,
 } from "@/types/analysis";
 
 export function deriveContextValueForArea(
@@ -73,6 +74,39 @@ export function applyClarificationAnswers(
   if (nextContext.user && !Object.keys(nextContext.user).length) {
     nextContext.user = undefined;
   }
+  if (nextContext.partner && !Object.keys(nextContext.partner).length) {
+    nextContext.partner = undefined;
+  }
+
+  return nextContext;
+}
+
+export function applyContextUpdates(
+  baseContext: ConversationContext,
+  updates?: ClarificationContextUpdates
+): ConversationContext {
+  if (!updates || (!updates.userRole && !updates.partnerRole)) {
+    return baseContext;
+  }
+
+  const nextContext: ConversationContext = {
+    ...baseContext,
+    user: baseContext.user ? { ...baseContext.user } : undefined,
+    partner: baseContext.partner ? { ...baseContext.partner } : undefined,
+  };
+
+  if (updates.userRole) {
+    nextContext.user = { ...(nextContext.user || {}), role: updates.userRole };
+  }
+
+  if (updates.partnerRole) {
+    nextContext.partner = { ...(nextContext.partner || {}), role: updates.partnerRole };
+  }
+
+  if (nextContext.user && !Object.keys(nextContext.user).length) {
+    nextContext.user = undefined;
+  }
+
   if (nextContext.partner && !Object.keys(nextContext.partner).length) {
     nextContext.partner = undefined;
   }

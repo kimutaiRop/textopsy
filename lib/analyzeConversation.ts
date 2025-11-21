@@ -189,6 +189,27 @@ function buildContextInstruction(context?: ConversationContext): string {
   return lines.join("\n");
 }
 
+function buildFairnessInstruction(context?: ConversationContext): string {
+  const perspective = context?.perspective ?? ConversationPerspective.THEIR_MESSAGES;
+  const focusLine =
+    perspective === ConversationPerspective.MY_MESSAGES
+      ? "Primary focus: grade the user's outgoing messages."
+      : perspective === ConversationPerspective.THEIR_MESSAGES
+        ? "Primary focus: grade the other person's messages."
+        : perspective === ConversationPerspective.BOTH
+          ? "Primary focus: weigh both sides with equal scrutiny."
+          : "Primary focus: infer who is speaking but stay balanced.";
+
+  return [
+    "FAIRNESS + ACCOUNTABILITY:",
+    `- ${focusLine}`,
+    "- Loyalty is to receipts, not the submitter's ego. If the person who uploaded the convo is cringe, call it out unapologetically.",
+    "- When the other person is messy, say it plainly. If both sides are chaotic, spell it out for each.",
+    "- Scores (cringe, interest, speed) must follow the evidence—never soften because the user wrote the line.",
+    "- If speaker order or attribution is uncertain, flag the ambiguity instead of inventing who initiated or who replied first.",
+  ].join("\n");
+}
+
 function describeContextGaps(context?: ConversationContext): string[] {
   const gaps: string[] = [];
   if (!context) {
@@ -367,6 +388,7 @@ export async function generateConversationalResponse(
 
   const personaInstruction = personaInstructions[persona];
   const contextInstruction = buildContextInstruction(conversationContext);
+  const fairnessInstruction = buildFairnessInstruction(conversationContext);
   const contextSection = contextInstruction ? `=== CONVERSATION CONTEXT ===\n${contextInstruction}\n\n` : "";
 
   const userGenderLabel =
@@ -398,8 +420,11 @@ IDENTITY + SPEAKER GUARDRAILS:
 - ${partnerReminder}
 - If speaker attribution remains genuinely ambiguous after reviewing the evidence, call it out and (optionally) ask the user to clarify rather than guessing.
 `.trim();
+  const guardrailSection = fairnessInstruction
+    ? `${participantGuardrails}\n\n${fairnessInstruction}`
+    : participantGuardrails;
   
-  const prompt = `${analysesContext}${evidenceContext}${chatHistoryText}${contextSection}${participantGuardrails}
+  const prompt = `${analysesContext}${evidenceContext}${chatHistoryText}${contextSection}${guardrailSection}
 
 You are responding as a ${persona} in a conversational style (NOT as an analysis).
 
@@ -567,12 +592,14 @@ Give me the raw truth.`;
   }
 
   const contextInstruction = buildContextInstruction(conversationContext);
+  const fairnessInstruction = buildFairnessInstruction(conversationContext);
 
   const systemInstruction = `
 You are Textopsy, an expert text-message analyst.
 Adopt the persona: ${persona}.
 ${personaInstructions[persona]}
 ${contextInstruction ? `\n${contextInstruction}\n` : ""}
+${fairnessInstruction ? `\n${fairnessInstruction}\n` : ""}
 Focus on ratio of messages, emoji presence, time gaps, punctuation aggression, and filler words.
 
 CRITICAL - Screenshot Message Extraction & WhatsApp Quote Handling:

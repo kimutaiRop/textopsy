@@ -1181,12 +1181,9 @@ export default function ConversationPage() {
                     );
                   }
                 })}
-              {/* Scroll anchor */}
               <div ref={messagesEndRef} />
             </div>
           </div>
-
-          {/* Always visible compose input at bottom */}
           <div className="sticky bottom-0 overflow-visible border-t border-gray-800 bg-[#0f172a] px-4 py-3 sm:px-6 sm:py-4">
             <div className="mx-auto max-w-4xl overflow-visible">
               {reanalyzingId ? (

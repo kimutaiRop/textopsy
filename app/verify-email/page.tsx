@@ -1,11 +1,19 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { IconLogo } from "@/components/Icons";
 
 export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={<VerifyEmailLoading />}>
+      <VerifyEmailContent />
+    </Suspense>
+  );
+}
+
+function VerifyEmailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<"success" | "error" | null>(null);
@@ -24,7 +32,6 @@ export default function VerifyEmailPage() {
     }
   }, [searchParams]);
 
-  // Redirect to home after 3 seconds if successful
   useEffect(() => {
     if (status === "success") {
       const timer = setTimeout(() => {
@@ -114,17 +121,23 @@ export default function VerifyEmailPage() {
             </div>
           </div>
         ) : (
-          <div className="text-center">
-            <div className="mb-4 flex justify-center">
-              <div className="relative h-12 w-12">
-                <div className="absolute inset-0 rounded-full border-4 border-gray-800" />
-                <div className="absolute inset-0 rounded-full border-4 border-t-[#b74bff] border-r-transparent border-b-transparent border-l-transparent animate-spin" />
-              </div>
-            </div>
-            <p className="text-gray-400">Processing verification...</p>
-          </div>
+          <VerifyEmailLoading />
         )}
       </div>
+    </div>
+  );
+}
+
+function VerifyEmailLoading() {
+  return (
+    <div className="text-center">
+      <div className="mb-4 flex justify-center">
+        <div className="relative h-12 w-12">
+          <div className="absolute inset-0 rounded-full border-4 border-gray-800" />
+          <div className="absolute inset-0 rounded-full border-4 border-t-[#b74bff] border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+        </div>
+      </div>
+      <p className="text-gray-400">Processing verification...</p>
     </div>
   );
 }

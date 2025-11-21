@@ -76,10 +76,13 @@ export function UniversalInput({
 
   useEffect(() => {
     if (textareaRef.current) {
+      const collapsedHeight = isMobile ? 64 : 100;
+      const expandedHeight = isMobile ? 140 : 160;
+      const maxHeight = isMobile ? 300 : 400;
+      const minHeight = isExpanded ? expandedHeight : collapsedHeight;
+
       textareaRef.current.style.height = "auto";
       const scrollHeight = textareaRef.current.scrollHeight;
-      const minHeight = isExpanded ? 160 : 100;
-      const maxHeight = isMobile ? 320 : 400;
       textareaRef.current.style.height = `${Math.min(Math.max(scrollHeight, minHeight), maxHeight)}px`;
     }
   }, [text, isExpanded, isMobile]);
@@ -152,7 +155,18 @@ export function UniversalInput({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        <div className={`relative flex flex-col ${isExpanded ? "min-h-[160px]" : "min-h-[100px]"} sm:min-h-[160px]`}>
+        <div
+          className="relative flex flex-col"
+          style={{
+            minHeight: isExpanded
+              ? isMobile
+                ? 140
+                : 160
+              : isMobile
+                ? 80
+                : 120,
+          }}
+        >
           <textarea
             ref={textareaRef}
             value={text}
@@ -167,8 +181,14 @@ export function UniversalInput({
             className="w-full resize-none overflow-hidden bg-transparent p-4 pb-20 font-mono text-sm leading-relaxed text-gray-200 placeholder:text-gray-600 focus:outline-none"
             spellCheck={false}
             style={{
-              minHeight: isExpanded ? "160px" : "100px",
-              maxHeight: isMobile ? "320px" : "400px",
+              minHeight: isExpanded
+                ? isMobile
+                  ? "140px"
+                  : "160px"
+                : isMobile
+                  ? "64px"
+                  : "100px",
+              maxHeight: isMobile ? "300px" : "400px",
             }}
           />
 

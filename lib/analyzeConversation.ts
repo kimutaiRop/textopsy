@@ -366,8 +366,41 @@ export async function generateConversationalResponse(
   }
 
   const personaInstruction = personaInstructions[persona];
+  const contextInstruction = buildContextInstruction(conversationContext);
+  const contextSection = contextInstruction ? `=== CONVERSATION CONTEXT ===\n${contextInstruction}\n\n` : "";
+
+  const userGenderLabel =
+    conversationContext?.user?.gender && conversationContext.user.gender !== GenderOption.UNKNOWN
+      ? genderLabels[conversationContext.user.gender]
+      : null;
+  const partnerDescriptor = conversationContext?.partner?.role || "the other person";
+  const partnerGenderLabel =
+    conversationContext?.partner?.gender && conversationContext.partner.gender !== GenderOption.UNKNOWN
+      ? genderLabels[conversationContext.partner.gender]
+      : null;
+
+  const genderReminder = userGenderLabel
+    ? `The user identifies as a ${userGenderLabel}. Never misgender them.`
+    : "The user's gender is not specified. Never assume they are a woman unless the transcript explicitly says so.";
+
+  const partnerReminder = partnerGenderLabel
+    ? `When mentioning ${partnerDescriptor}, remember they are a ${partnerGenderLabel}.`
+    : `If you mention ${partnerDescriptor}, keep their gender neutral unless the evidence specifies otherwise.`;
+
+  const participantGuardrails = `
+IDENTITY + SPEAKER GUARDRAILS:
+- You are texting with the Textopsy user${userGenderLabel ? ` (a ${userGenderLabel})` : ""}. Talk directly to them using "you"/"your".
+- Refer to ${partnerDescriptor} as "they"/"them" (or their provided label) — never as "you".
+- If the transcript explicitly says something like "I am Zeya in this conversation", treat that as authoritative: that name equals the user. Do NOT flip the identities.
+- When conversation lines include prefixes such as "Jacky:", "Zeya:", timestamps, or [LEFT]/[RIGHT] markers, attribute the message to that exact speaker/alignment. Quoted names inside a bubble are NOT the sender.
+- Before claiming who messaged first, who replied last, or who initiated a topic, re-check the actual order/timestamps. If it's unclear, say it's unclear instead of inventing details.
+- ${genderReminder}
+- ${partnerReminder}
+- If speaker attribution remains genuinely ambiguous after reviewing the evidence, call it out and (optionally) ask the user to clarify rather than guessing.
+`.trim();
   
-  const prompt = `${analysesContext}${evidenceContext}${chatHistoryText}
+  const prompt = `${analysesContext}${evidenceContext}${chatHistoryText}${contextSection}${participantGuardrails}
+
 You are responding as a ${persona} in a conversational style (NOT as an analysis).
 
 The user is asking you a question about their conversation or relationship situation. You have access to:

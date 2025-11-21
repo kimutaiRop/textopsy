@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { Persona, type ConversationContext } from "@/types/analysis";
+import { Persona, type ConversationContext, defaultConversationContext, GenderOption } from "@/types/analysis";
 import { verifyToken, getAuthTokenFromRequest } from "@/lib/auth";
 import { db, conversations, chatMessages, analyses } from "@/lib/db";
 import { generateId, getConversationInputs, getSessionIdFromRequest } from "@/lib/conversation";
@@ -14,6 +14,38 @@ type ChatRequest = {
 };
 
 const personaValues = new Set(Object.values(Persona));
+
+function mergeConversationContext(
+  payloadContext: ConversationContext | null | undefined,
+  savedContext: ConversationContext | null | undefined,
+  userGender: GenderOption | null
+): ConversationContext | undefined {
+  const raw = payloadContext ?? savedContext ?? null;
+  let merged: ConversationContext | undefined;
+
+  if (raw) {
+    merged = {
+      ...defaultConversationContext,
+      ...raw,
+      user: raw.user ? { ...raw.user } : undefined,
+      partner: raw.partner ? { ...raw.partner } : undefined,
+    };
+  }
+
+  const resolvedGender = userGender && userGender !== GenderOption.UNKNOWN ? userGender : null;
+  if (resolvedGender) {
+    if (!merged) {
+      merged = {
+        ...defaultConversationContext,
+        user: { gender: resolvedGender },
+      };
+    } else {
+      merged.user = { ...(merged.user || {}), gender: resolvedGender };
+    }
+  }
+
+  return merged;
+}
 
 export async function POST(
   request: Request,
@@ -186,11 +218,17 @@ export async function POST(
       createdAt: new Date(),
     });
 
+    const mergedContext = mergeConversationContext(
+      payload.conversationContext,
+      conversation.context,
+      planInfo.gender ?? null
+    );
+
     // Generate AI response
     const aiResponse = await generateConversationalResponse(
       payload.message.trim(),
       payload.persona,
-      payload.conversationContext || conversation.context || undefined,
+      mergedContext,
       chatHistory,
       analysisRows,
       conversationEvidence
